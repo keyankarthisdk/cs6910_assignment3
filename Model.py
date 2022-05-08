@@ -94,13 +94,9 @@ def Model_EncoderDecoderBlocks(X_shape, Y_shape, Blocks, **params):
         )
         print("Attention Output:", att_output.shape)
         # Concat Layer
-        decoder_concat_input = tf.concat([att_output, decoderData[-1]["output"]], axis=-1) # , name="concat")
+        decoder_concat_input = tf.concat([att_output, decoderData[-1]["output"]], axis=-1)
         print("Decoder Concat Input:", decoder_concat_input.shape)
-        # Dense Layer
-        # att_vector = Dense(
-        #     params["attn_n_units"], activation="tanh", use_bias=False, name="attention_vector"
-        # )(decoder_concat_input)
-        att_vector = decoder_concat_input ##### TODO: Check if this is correct
+        att_vector = decoder_concat_input
         print("Attention Vector:", att_vector.shape)
         # Output Layer
         decoder_outputs = TimeDistributed(Dense(
@@ -157,7 +153,6 @@ def Model_Train(model, inputs, n_epochs, wandb_data, **params):
         WandbCallbackFunc = WandbCallback(
             monitor="val_accuracy", save_model=True, log_evaluation=True, log_weights=True,
             log_best_prefix="best_",
-            # validation_data=([dataset_val_encoder_input, dataset_val_decoder_input], dataset_val_decoder_output),
             validation_steps=VALIDATION_STEP_SIZE
         )
         callbacks.append(WandbCallbackFunc)
@@ -207,7 +202,6 @@ def Model_Test(model, dataset, **params):
     print(dataset_test_decoder_output.shape)
     
     # Test Model - Charecter Level
-    # loss_test, eval_test = 0.0, 0.0
     loss_test, eval_test = model.evaluate(
         [dataset_test_encoder_input, dataset_test_decoder_input], 
         dataset_test_decoder_output, 
@@ -232,7 +226,6 @@ def Model_Test(model, dataset, **params):
     # Remove SOS and EOS
     target_words = dataset_test_decoder_output
     if not OUTPUT_LABEL_ENCODING: target_words = np.argmax(dataset_test_decoder_output, axis=-1)
-    # target_words = [word[1:] for word in target_words]
     # Get Charecter String
     target_words = ["".join([params["target_chars"][ci] for ci in word]) for word in target_words]
     # Remove SOS and EOS
@@ -242,8 +235,6 @@ def Model_Test(model, dataset, **params):
     # Size Matches
     sizeMatches = np.count_nonzero([len(target_words[i]) == len(outputs[i]) for i in range(len(target_words))])
     print("Size Matches:", sizeMatches, "/", len(target_words), "=", sizeMatches / len(target_words))
-    # for i in range(len(outputs)):
-    #     print(i, ":\n", len(outputs[i]), ":", list(outputs[i]), "\n", len(target_words[i]), ":", list(target_words[i]), "\n")
     # Calculate Word Level Accuracy
     outputs = np.array(outputs)
     target_words = np.array(target_words)
@@ -305,7 +296,6 @@ def Model_Inference_GetEncoderDecoder(model, **params):
     # Get Encoder Model which gives cell states as output
     model_encoder = Model(encoder_inputs, encoder_states)
 
-    # print("Encoder Inputs:", len(encoder_inputs))
     print("Encoder Outputs:", len(encoder_states))
 
     # Decoder Input
@@ -338,7 +328,6 @@ def Model_Inference_GetEncoderDecoder(model, **params):
                 li = int(name.lstrip("decoder_block_").split("_")[0])
                 n_cells = layer.output_shape[0][-1]
                 decoder_data[li] = [layer]
-                # state_count = len(encoder_data[li])-1 if params["use_attention"] else len(encoder_data[li])
                 state_count = len(encoder_data[li])-1
                 for i in range(state_count):
                     decoder_data[li].append(Input(shape=(n_cells,)))
@@ -359,15 +348,13 @@ def Model_Inference_GetEncoderDecoder(model, **params):
         # Attention Layer
         att_output_inf, att_states_inf = attention_layer(
             query=decoder_outputs, 
-            value=decoder_hidden_state_inputs#,
-            # mask=mask_layer.output
+            value=decoder_hidden_state_inputs
         )
         decoder_states_outputs.append(att_states_inf)
         # Concat Layer
         decoder_concat_output = concat_layer([att_output_inf, decoder_outputs], axis=-1)
         # Dense Layer
-        # decoder_outputs = attention_dense_layer(decoder_concat_output)
-        decoder_outputs = decoder_concat_output ##### TODO: Check if this is correct
+        decoder_outputs = decoder_concat_output
 
     # Softmax layer
     decoder_outputs = decoder_dense(decoder_outputs)
@@ -393,10 +380,6 @@ def Model_Inference_Transliterate(words, model_encoder, model_decoder, **params)
     batch_size = words.shape[0]
     # Encode the input string
     encoded_states = model_encoder.predict(words)
-    # encoded_states = np.array(encoded_states)
-    # if encoded_states.ndim == 2:
-    #     encoded_states = np.reshape(encoded_states, (1, encoded_states.shape[0], encoded_states.shape[1]))
-    # print(encoded_states.shape)
 
     target_sequence = np.zeros((batch_size, 1, DATASET_DAKSHINA_TAMIL_UNIQUE_CHARS["target"]+1))
     # Set SOS
@@ -408,8 +391,7 @@ def Model_Inference_Transliterate(words, model_encoder, model_decoder, **params)
     for i in range(DATASET_DAKSHINA_TAMIL_MAX_CHARS["target"]):
         decoder_inputs = [target_sequence]
         for s in encoded_states: decoder_inputs.append(s)
-        
-        # print("DecoderInp:", len(decoder_inputs))
+
         decoded_data = model_decoder.predict(decoder_inputs)
         output_tokens = decoded_data[0]
         decoded_states = decoded_data[1:]

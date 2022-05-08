@@ -22,7 +22,7 @@ DATASET_PATH_DAKSHINA_TAMIL_PROCESSED = "Dataset/dakshina_processed/ta/"
 DATASET_DAKSHINA_TAMIL_CLASSES = ["target", "input", "rel"]
 DATASET_DAKSHINA_TAMIL_MAX_CHARS = {
     "input": 32,
-    "target": 32, # 28,
+    "target": 32, 
 }
 DATASET_DAKSHINA_TAMIL_UNIQUE_CHARS = {
     "input": 28,
@@ -34,7 +34,7 @@ SYMBOLS = {
 }
 FONT_PATH_TAMIL = "Library/Latha.ttf"
 
-LOAD_SAVED_DATASET = True # Change to False finally
+LOAD_SAVED_DATASET = True
 
 # Main Functions
 # Encoding Functions
@@ -49,10 +49,7 @@ def EncodeDataset_CharOneHot(dataset, input_MAX_CHARS=None, target_MAX_CHARS=Non
     Encode Dataset using One Hot per Character
     '''
     # Remove nan rows
-    # print("Dataset Size:", dataset.shape)
-    # print("Nan Count:", dataset.isnull().sum().sum())
     dataset = dataset.dropna().reset_index(drop=True)
-    # print("Final Dataset Size:", dataset.shape)
     # Add SOS and EOS
     for c in ["input", "target"]:
         dataset[c] = dataset[c].apply(AddStartEndTokens)
@@ -186,6 +183,3 @@ def LoadTestDataset_Dakshina(
     return test_dataset, test_dataset_onehot
 
 # Run
-# _1, _2 = LoadTrainDataset_Dakshina(DATASET_PATH_DAKSHINA_TAMIL)
-# DATASET_TEST, DATASET_TEST_ENCODED = LoadTestDataset_Dakshina(DATASET_PATH_DAKSHINA_TAMIL)
-# print(DATASET_TEST.head())

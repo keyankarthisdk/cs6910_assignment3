@@ -72,8 +72,6 @@ def Model_Sweep_Run(wandb_data, config=None):
             }, 
             "compile_params": {
                 "loss_fn": LOSS_FUNCTIONS[LOSS_FN](),
-                # CategoricalCrossentropy(),
-                # SparseCategoricalCrossentropy(),
                 "optimizer": Adam(),
                 "metrics": ["accuracy"]
             }
@@ -139,8 +137,6 @@ def Model_Sweep_Run(wandb_data, config=None):
         })
 
         # Close Wandb Run
-        # run_name = "ep:"+str(N_EPOCHS) + "_" + "bs:"+str(BATCH_SIZE) + "_" + "nf:"+str(N_FILTERS) + "_" + str(DROPOUT)
-        # wandb.run.name = run_name
         wandb.finish()
 
 # Runner Functions
